@@ -1,3 +1,39 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```bash
+
+# 增加更新
+git add *.ipynb
+
+git remote -v
+
+git commit -m '更新 3-1 #1 change Aug 12, 2021'
+
+git push origin master
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 3-1,低阶API示范
 
 下面的范例使用TensorFlow的低阶API实现线性回归模型和DNN二分类模型。
@@ -25,11 +61,6 @@ def printbar():
     timestring = tf.strings.join([timeformat(hour),timeformat(minite),
                 timeformat(second)],separator = ":")
     tf.print("=========="*8+timestring)
-
-```
-
-```python
-
 ```
 
 ### 一，线性回归模型
@@ -52,7 +83,6 @@ X = tf.random.uniform([n,2],minval=-10,maxval=10)
 w0 = tf.constant([[2.0],[-3.0]])
 b0 = tf.constant([[3.0]])
 Y = X@w0 + b0 + tf.random.normal([n,1],mean = 0.0,stddev= 2.0)  # @表示矩阵乘法,增加正态扰动
-
 ```
 
 ```python
@@ -72,10 +102,7 @@ ax2.scatter(X[:,1],Y[:,0], c = "g")
 plt.xlabel("x2")
 plt.ylabel("y",rotation = 0)
 plt.show()
-
 ```
-
-![](./data/3-1-01-回归数据可视化.png)
 
 ```python
 # 构建数据管道迭代器
@@ -92,30 +119,7 @@ batch_size = 8
 (features,labels) = next(data_iter(X,Y,batch_size))
 print(features)
 print(labels)
-
 ```
-
-```
-tf.Tensor(
-[[ 2.6161194   0.11071014]
- [ 9.79207    -0.70180416]
- [ 9.792343    6.9149055 ]
- [-2.4186516  -9.375019  ]
- [ 9.83749    -3.4637213 ]
- [ 7.3953056   4.374569  ]
- [-0.14686584 -0.28063297]
- [ 0.49001217 -9.739792  ]], shape=(8, 2), dtype=float32)
-tf.Tensor(
-[[ 9.334667 ]
- [22.058844 ]
- [ 3.0695205]
- [26.736238 ]
- [35.292133 ]
- [ 4.2943544]
- [ 1.6713585]
- [34.826904 ]], shape=(8, 1), dtype=float32)
-```
-
 
 **2，定义模型**
 
@@ -136,10 +140,6 @@ class LinearRegression:
 model = LinearRegression()
 ```
 
-```python
-
-```
-
 **3，训练模型**
 
 ```python
@@ -155,7 +155,6 @@ def train_step(model, features, labels):
     b.assign(b - 0.001*dloss_db)
     
     return loss
- 
 ```
 
 ```python
@@ -163,11 +162,6 @@ def train_step(model, features, labels):
 batch_size = 10
 (features,labels) = next(data_iter(X,Y,batch_size))
 train_step(model,features,labels)
-
-```
-
-```
-<tf.Tensor: shape=(), dtype=float32, numpy=211.09982>
 ```
 
 ```python
@@ -183,34 +177,6 @@ def train_model(model,epochs):
             tf.print("b =",b)
 
 train_model(model,epochs = 200)
-
-```
-
-```
-================================================================================16:35:56
-epoch = 50 loss =  1.78806472
-w = [[1.97554708]
- [-2.97719598]]
-b = [[2.60692883]]
-================================================================================16:36:00
-epoch = 100 loss =  2.64588404
-w = [[1.97319281]
- [-2.97810626]]
-b = [[2.95525956]]
-================================================================================16:36:04
-epoch = 150 loss =  1.42576694
-w = [[1.96466208]
- [-2.98337793]]
-b = [[3.00264144]]
-================================================================================16:36:08
-epoch = 200 loss =  1.68992615
-w = [[1.97718477]
- [-2.983814]]
-b = [[3.01013041]]
-```
-
-```python
-
 ```
 
 ```python
@@ -240,34 +206,6 @@ def train_model(model,epochs):
             tf.print("b =",b)
 
 train_model(model,epochs = 200)
-
-```
-
-```
-================================================================================16:36:35
-epoch = 50 loss =  0.894210339
-w = [[1.96927285]
- [-2.98914337]]
-b = [[3.00987792]]
-================================================================================16:36:36
-epoch = 100 loss =  1.58621466
-w = [[1.97566223]
- [-2.98550248]]
-b = [[3.00998402]]
-================================================================================16:36:37
-epoch = 150 loss =  2.2695992
-w = [[1.96664226]
- [-2.99248481]]
-b = [[3.01028705]]
-================================================================================16:36:38
-epoch = 200 loss =  1.90848124
-w = [[1.98000824]
- [-2.98888135]]
-b = [[3.01085401]]
-```
-
-```python
-
 ```
 
 ```python
@@ -295,17 +233,8 @@ plt.ylabel("y",rotation = 0)
 plt.show()
 ```
 
-![](./data/3-1-2-回归结果可视化.png)
-
-```python
-
-```
-
 ### 二，DNN二分类模型
 
-```python
-
-```
 
 **1，准备数据**
 
@@ -342,10 +271,7 @@ plt.figure(figsize = (6,6))
 plt.scatter(Xp[:,0].numpy(),Xp[:,1].numpy(),c = "r")
 plt.scatter(Xn[:,0].numpy(),Xn[:,1].numpy(),c = "g")
 plt.legend(["positive","negative"]);
-
 ```
-
-![](./data/3-1-03-分类数据可视化.png)
 
 ```python
 # 构建数据管道迭代器
@@ -362,31 +288,6 @@ batch_size = 10
 (features,labels) = next(data_iter(X,Y,batch_size))
 print(features)
 print(labels)
-```
-
-```
-tf.Tensor(
-[[ 0.03732629  3.5783494 ]
- [ 0.542919    5.035079  ]
- [ 5.860281   -2.4476354 ]
- [ 0.63657564  3.194231  ]
- [-3.5072308   2.5578873 ]
- [-2.4109735  -3.6621518 ]
- [ 4.0975413  -2.4172943 ]
- [ 1.9393908  -6.782317  ]
- [-4.7453732  -0.5176727 ]
- [-1.4057113  -7.9775257 ]], shape=(10, 2), dtype=float32)
-tf.Tensor(
-[[1.]
- [1.]
- [0.]
- [1.]
- [1.]
- [1.]
- [1.]
- [0.]
- [1.]
- [0.]], shape=(10, 1), dtype=float32)
 ```
 
 ```python
@@ -509,25 +410,6 @@ def train_model(model,epochs):
 train_model(model,epochs = 600)
 ```
 
-```
-================================================================================16:47:35
-epoch = 100 loss =  0.567795336 accuracy =  0.71
-================================================================================16:47:39
-epoch = 200 loss =  0.50955683 accuracy =  0.77
-================================================================================16:47:43
-epoch = 300 loss =  0.421476126 accuracy =  0.84
-================================================================================16:47:47
-epoch = 400 loss =  0.330618203 accuracy =  0.9
-================================================================================16:47:51
-epoch = 500 loss =  0.308296859 accuracy =  0.89
-================================================================================16:47:55
-epoch = 600 loss =  0.279367268 accuracy =  0.96
-```
-
-```python
-
-```
-
 ```python
 # 结果可视化
 fig, (ax1,ax2) = plt.subplots(nrows=1,ncols=2,figsize = (12,5))
@@ -545,8 +427,6 @@ ax2.legend(["positive","negative"]);
 ax2.set_title("y_pred");
 
 ```
-
-![](./data/3-1-04-分类结果可视化.png)
 
 ```python
 

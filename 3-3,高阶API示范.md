@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 3-3,高阶API示范
 
 下面的范例使用TensorFlow的高阶API实现线性回归模型和DNN二分类模型。
@@ -30,8 +54,6 @@ def printbar():
     timestring = tf.strings.join([timeformat(hour),timeformat(minite),
                 timeformat(second)],separator = ":")
     tf.print("=========="*8+timestring)
-
-    
 ```
 
 ### 一，线性回归模型
@@ -57,7 +79,6 @@ X = tf.random.uniform([n,2],minval=-10,maxval=10)
 w0 = tf.constant([[2.0],[-3.0]])
 b0 = tf.constant([[3.0]])
 Y = X@w0 + b0 + tf.random.normal([n,1],mean = 0.0,stddev= 2.0)  # @表示矩阵乘法,增加正态扰动
-
 ```
 
 ```python
@@ -76,13 +97,6 @@ ax2.scatter(X[:,1],Y[:,0], c = "g")
 plt.xlabel("x2")
 plt.ylabel("y",rotation = 0)
 plt.show()
-
-```
-
-![](./data/3-3-01-回归数据可视化.png)
-
-```python
-
 ```
 
 **2，定义模型**
@@ -93,18 +107,6 @@ tf.keras.backend.clear_session()
 model = models.Sequential()
 model.add(layers.Dense(1,input_shape =(2,)))
 model.summary()
-```
-
-```
-Model: "sequential"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-dense (Dense)                (None, 1)                 3         
-=================================================================
-Total params: 3
-Trainable params: 3
-Non-trainable params: 0
 ```
 
 ```python
@@ -121,21 +123,6 @@ model.fit(X,Y,batch_size = 10,epochs = 200)
 
 tf.print("w = ",model.layers[0].kernel)
 tf.print("b = ",model.layers[0].bias)
-
-```
-
-```
-Epoch 197/200
-400/400 [==============================] - 0s 190us/sample - loss: 4.3977 - mae: 1.7129
-Epoch 198/200
-400/400 [==============================] - 0s 172us/sample - loss: 4.3918 - mae: 1.7117
-Epoch 199/200
-400/400 [==============================] - 0s 134us/sample - loss: 4.3861 - mae: 1.7106
-Epoch 200/200
-400/400 [==============================] - 0s 166us/sample - loss: 4.3786 - mae: 1.7092
-w =  [[1.99339032]
- [-3.00866461]]
-b =  [2.67018795]
 ```
 
 ```python
@@ -163,8 +150,6 @@ plt.ylabel("y",rotation = 0)
 
 plt.show()
 ```
-
-![](./data/3-3-02-回归结果可视化.png)
 
 ```python
 
@@ -221,8 +206,6 @@ plt.legend(["positive","negative"]);
 
 ```
 
-![](./data/3-3-03-分类数据可视化.png)
-
 ```python
 ds_train = tf.data.Dataset.from_tensor_slices((X[0:n*3//4,:],Y[0:n*3//4,:])) \
      .shuffle(buffer_size = 1000).batch(20) \
@@ -233,11 +216,6 @@ ds_valid = tf.data.Dataset.from_tensor_slices((X[n*3//4:,:],Y[n*3//4:,:])) \
      .batch(20) \
      .prefetch(tf.data.experimental.AUTOTUNE) \
      .cache()
-
-```
-
-```python
-
 ```
 
 **2，定义模型**
@@ -268,32 +246,7 @@ model.build(input_shape =(None,2))
 model.summary()
 ```
 
-```
-Model: "dnn_model"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-dense1 (Dense)               multiple                  12        
-_________________________________________________________________
-dense2 (Dense)               multiple                  40        
-_________________________________________________________________
-dense3 (Dense)               multiple                  9         
-=================================================================
-Total params: 61
-Trainable params: 61
-Non-trainable params: 0
-_________________________________________________________________
-```
-
-```python
-
-```
-
 **3，训练模型**
-
-```python
-
-```
 
 ```python
 ### 自定义训练循环
@@ -350,33 +303,6 @@ def train_model(model,ds_train,ds_valid,epochs):
 train_model(model,ds_train,ds_valid,1000)
 ```
 
-```
-================================================================================17:35:02
-Epoch=100,Loss:0.194088802,Accuracy:0.923064,Valid Loss:0.215538561,Valid Accuracy:0.904368
-================================================================================17:35:22
-Epoch=200,Loss:0.151239693,Accuracy:0.93768847,Valid Loss:0.181166962,Valid Accuracy:0.920664132
-================================================================================17:35:43
-Epoch=300,Loss:0.134556711,Accuracy:0.944247484,Valid Loss:0.171530813,Valid Accuracy:0.926396072
-================================================================================17:36:04
-Epoch=400,Loss:0.125722557,Accuracy:0.949172914,Valid Loss:0.16731061,Valid Accuracy:0.929318547
-================================================================================17:36:24
-Epoch=500,Loss:0.120216407,Accuracy:0.952525079,Valid Loss:0.164817035,Valid Accuracy:0.931044817
-================================================================================17:36:44
-Epoch=600,Loss:0.116434008,Accuracy:0.954830289,Valid Loss:0.163089141,Valid Accuracy:0.932202339
-================================================================================17:37:05
-Epoch=700,Loss:0.113658346,Accuracy:0.956433,Valid Loss:0.161804497,Valid Accuracy:0.933092058
-================================================================================17:37:25
-Epoch=800,Loss:0.111522928,Accuracy:0.957467675,Valid Loss:0.160796657,Valid Accuracy:0.93379426
-================================================================================17:37:46
-Epoch=900,Loss:0.109816991,Accuracy:0.958205402,Valid Loss:0.159987748,Valid Accuracy:0.934343576
-================================================================================17:38:06
-Epoch=1000,Loss:0.10841465,Accuracy:0.958805501,Valid Loss:0.159325734,Valid Accuracy:0.934785843
-```
-
-```python
-
-```
-
 ```python
 # 结果可视化
 fig, (ax1,ax2) = plt.subplots(nrows=1,ncols=2,figsize = (12,5))
@@ -392,12 +318,6 @@ ax2.scatter(Xp_pred[:,0].numpy(),Xp_pred[:,1].numpy(),c = "r")
 ax2.scatter(Xn_pred[:,0].numpy(),Xn_pred[:,1].numpy(),c = "g")
 ax2.legend(["positive","negative"]);
 ax2.set_title("y_pred");
-```
-
-![](./data/3-3-04-分类结果可视化.png)
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

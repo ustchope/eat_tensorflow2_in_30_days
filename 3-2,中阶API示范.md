@@ -1,3 +1,39 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```bash
+
+# 增加更新
+git add *.ipynb
+
+git remote -v
+
+git commit -m '更新 2-1 #1 change Aug 12, 2021'
+
+git push origin master
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[1] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 3-2,中阶API示范
 
 下面的范例使用TensorFlow的中阶API实现线性回归模型和和DNN二分类模型。
@@ -25,12 +61,6 @@ def printbar():
     timestring = tf.strings.join([timeformat(hour),timeformat(minite),
                 timeformat(second)],separator = ":")
     tf.print("=========="*8+timestring)
-
-    
-```
-
-```python
-
 ```
 
 ### 一，线性回归模型
@@ -53,7 +83,6 @@ X = tf.random.uniform([n,2],minval=-10,maxval=10)
 w0 = tf.constant([[2.0],[-3.0]])
 b0 = tf.constant([[3.0]])
 Y = X@w0 + b0 + tf.random.normal([n,1],mean = 0.0,stddev= 2.0)  # @表示矩阵乘法,增加正态扰动
-
 ```
 
 ```python
@@ -71,20 +100,13 @@ ax2.scatter(X[:,1],Y[:,0], c = "g")
 plt.xlabel("x2")
 plt.ylabel("y",rotation = 0)
 plt.show()
-
 ```
-
-![](./data/3-2-01-回归数据可视化.png)
 
 ```python
 #构建输入数据管道
 ds = tf.data.Dataset.from_tensor_slices((X,Y)) \
      .shuffle(buffer_size = 100).batch(10) \
      .prefetch(tf.data.experimental.AUTOTUNE)  
-```
-
-```python
-
 ```
 
 **2，定义模型**
@@ -94,10 +116,6 @@ model = layers.Dense(units = 1)
 model.build(input_shape = (2,)) #用build方法创建variables
 model.loss_func = losses.mean_squared_error
 model.optimizer = optimizers.SGD(learning_rate=0.001)
-```
-
-```python
-
 ```
 
 **3，训练模型**
@@ -117,7 +135,6 @@ def train_step(model, features, labels):
 # 测试train_step效果
 features,labels = next(ds.as_numpy_iterator())
 train_step(model,features,labels)
-
 ```
 
 ```python
@@ -132,34 +149,6 @@ def train_model(model,epochs):
             tf.print("w =",model.variables[0])
             tf.print("b =",model.variables[1])
 train_model(model,epochs = 200)
-
-```
-
-```
-================================================================================17:01:48
-epoch = 50 loss =  2.56481647
-w = [[1.99355531]
- [-2.99061537]]
-b = [3.09484935]
-================================================================================17:01:51
-epoch = 100 loss =  5.96198225
-w = [[1.98028314]
- [-2.96975136]]
-b = [3.09501529]
-================================================================================17:01:54
-epoch = 150 loss =  4.79625702
-w = [[2.00056171]
- [-2.98774862]]
-b = [3.09567738]
-================================================================================17:01:58
-epoch = 200 loss =  8.26704407
-w = [[2.00282311]
- [-2.99300027]]
-b = [3.09406662]
-```
-
-```python
-
 ```
 
 ```python
@@ -188,10 +177,7 @@ plt.xlabel("x2")
 plt.ylabel("y",rotation = 0)
 
 plt.show()
-
 ```
-
-![](./data/3-2-02-回归结果可视化.png)
 
 ```python
 
@@ -242,8 +228,6 @@ plt.legend(["positive","negative"]);
 
 ```
 
-![](./data/3-1-03-分类数据可视化.png)
-
 ```python
 #构建输入数据管道
 ds = tf.data.Dataset.from_tensor_slices((X,Y)) \
@@ -282,7 +266,6 @@ model = DNNModel()
 model.loss_func = losses.binary_crossentropy
 model.metric_func = metrics.binary_accuracy
 model.optimizer = optimizers.Adam(learning_rate=0.001)
-
 ```
 
 ```python
@@ -296,16 +279,6 @@ metric = model.metric_func(tf.reshape(labels,[-1]),tf.reshape(predictions,[-1]))
 
 tf.print("init loss:",loss)
 tf.print("init metric",metric)
-
-```
-
-```
-init loss: 1.13653195
-init metric 0.5
-```
-
-```python
-
 ```
 
 **3，训练模型**
@@ -330,15 +303,6 @@ features,labels = next(ds.as_numpy_iterator())
 train_step(model,features,labels)
 ```
 
-```
-(<tf.Tensor: shape=(), dtype=float32, numpy=1.2033114>,
- <tf.Tensor: shape=(), dtype=float32, numpy=0.47>)
-```
-
-```python
-
-```
-
 ```python
 def train_model(model,epochs):
     for epoch in tf.range(1,epochs+1):
@@ -349,26 +313,6 @@ def train_model(model,epochs):
             printbar()
             tf.print("epoch =",epoch,"loss = ",loss, "accuracy = ",metric)
 train_model(model,epochs = 60)
-
-```
-
-```
-================================================================================17:07:36
-epoch = 10 loss =  0.556449413 accuracy =  0.79
-================================================================================17:07:38
-epoch = 20 loss =  0.439187407 accuracy =  0.86
-================================================================================17:07:40
-epoch = 30 loss =  0.259921253 accuracy =  0.95
-================================================================================17:07:42
-epoch = 40 loss =  0.244920313 accuracy =  0.9
-================================================================================17:07:43
-epoch = 50 loss =  0.19839409 accuracy =  0.92
-================================================================================17:07:45
-epoch = 60 loss =  0.126151696 accuracy =  0.95
-```
-
-```python
-
 ```
 
 ```python
@@ -386,11 +330,7 @@ ax2.scatter(Xp_pred[:,0].numpy(),Xp_pred[:,1].numpy(),c = "r")
 ax2.scatter(Xn_pred[:,0].numpy(),Xn_pred[:,1].numpy(),c = "g")
 ax2.legend(["positive","negative"]);
 ax2.set_title("y_pred");
-
-
 ```
-
-![](./data/3-2-04-分类结果可视化.png)
 
 ```python
 

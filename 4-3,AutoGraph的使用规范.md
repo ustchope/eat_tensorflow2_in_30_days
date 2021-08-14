@@ -29,10 +29,6 @@ TensorFlow 2.0主要使用的是动态计算图和Autograph。
 * 3，被@tf.function修饰的函数不可修改该函数外部的Python列表或字典等数据结构变量。
 
 <!-- #endregion -->
-```python
-
-```
-
 ### 二，Autograph编码规范解析
 
 
