@@ -1,3 +1,39 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```bash
+
+# 增加更新
+git add *.ipynb *.md
+
+git remote -v
+
+git commit -m '更新 4-3 #1 change Aug 13, 2021'
+
+git push origin master
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 4-3,AutoGraph的使用规范
 
 有三种计算图的构建方式：静态计算图，动态计算图，以及Autograph。
@@ -55,32 +91,10 @@ np_random()
 np_random()
 ```
 
-```
-array([[ 0.22619201, -0.4550123 , -0.42587565],
-       [ 0.05429906,  0.2312667 , -1.44819738],
-       [ 0.36571796,  1.45578986, -1.05348983]])
-array([[ 0.22619201, -0.4550123 , -0.42587565],
-       [ 0.05429906,  0.2312667 , -1.44819738],
-       [ 0.36571796,  1.45578986, -1.05348983]])
-```
-
 ```python
 #tf_random每次执行都会有重新生成随机数。
 tf_random()
 tf_random()
-```
-
-```
-[[-1.38956189 -0.394843668 0.420657277]
- [2.87235498 -1.33740318 -0.533843279]
- [0.918233037 0.118598573 -0.399486482]]
-[[-0.858178258 1.67509317 0.511889517]
- [-0.545829177 -2.20118237 -0.968222201]
- [0.733958483 -0.61904633 0.77440238]]
-```
-
-```python
-
 ```
 
 **2，避免在@tf.function修饰的函数内部定义tf.Variable.**
@@ -97,7 +111,6 @@ def outer_var():
 
 outer_var() 
 outer_var()
-
 ```
 
 ```python
@@ -109,9 +122,8 @@ def inner_var():
     return(x)
 
 #执行将报错
-#inner_var()
-#inner_var()
-
+inner_var()
+inner_var()
 ```
 
 ```
@@ -147,11 +159,6 @@ def append_tensor(x):
 append_tensor(tf.constant(5.0))
 append_tensor(tf.constant(6.0))
 print(tensor_list)
-
-```
-
-```
-[<tf.Tensor: shape=(), dtype=float32, numpy=5.0>, <tf.Tensor: shape=(), dtype=float32, numpy=6.0>]
 ```
 
 ```python
@@ -166,15 +173,6 @@ def append_tensor(x):
 append_tensor(tf.constant(5.0))
 append_tensor(tf.constant(6.0))
 print(tensor_list)
-
-```
-
-```
-[<tf.Tensor 'x:0' shape=() dtype=float32>]
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

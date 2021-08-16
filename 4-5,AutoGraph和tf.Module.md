@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 4-5,AutoGraph和tf.Module
 
 
@@ -63,11 +87,6 @@ add_print(tf.constant(3.0))
 #add_print(tf.constant(3)) #输入不符合张量签名的参数将报错
 ```
 
-```
-4
-```
-
-
 下面利用tf.Module的子类化将其封装一下。
 
 ```python
@@ -84,7 +103,6 @@ class DemoModule(tf.Module):
             self.x.assign_add(a)
             tf.print(self.x)
             return(self.x)
-
 ```
 
 ```python
@@ -93,19 +111,10 @@ demo = DemoModule(init_value = tf.constant(1.0))
 result = demo.addprint(tf.constant(5.0))
 ```
 
-```
-6
-```
-
 ```python
 #查看模块中的全部变量和全部可训练变量
 print(demo.variables)
 print(demo.trainable_variables)
-```
-
-```
-(<tf.Variable 'demo_module/Variable:0' shape=() dtype=float32, numpy=6.0>,)
-(<tf.Variable 'demo_module/Variable:0' shape=() dtype=float32, numpy=6.0>,)
 ```
 
 ```python
@@ -124,19 +133,9 @@ demo2 = tf.saved_model.load("./data/demo/1")
 demo2.addprint(tf.constant(5.0))
 ```
 
-```
-11
-```
-
 ```python
 # 查看模型文件相关信息，红框标出来的输出信息在模型部署和跨平台使用时有可能会用到
 !saved_model_cli show --dir ./data/demo/1 --all
-```
-
-![](./data/查看模型文件信息.jpg)
-
-```python
-
 ```
 
 在tensorboard中查看计算图，模块会被添加模块名demo_module,方便层次化呈现计算图结构。
@@ -162,11 +161,6 @@ with writer.as_default():
         name="demomodule",
         step=0,
         profiler_outdir=logdir)
-    
-```
-
-```python
-
 ```
 
 ```python
@@ -185,9 +179,6 @@ notebook.start("--logdir ./data/demomodule/")
 
 ![](./data/demomodule的计算图结构.jpg)
 
-```python
-
-```
 
 除了利用tf.Module的子类化实现封装，我们也可以通过给tf.Module添加属性的方法进行封装。
 
@@ -208,16 +199,8 @@ mymodule.addprint = addprint
 mymodule.addprint(tf.constant(1.0)).numpy()
 ```
 
-```
-1.0
-```
-
 ```python
 print(mymodule.variables)
-```
-
-```
-(<tf.Variable 'Variable:0' shape=() dtype=float32, numpy=0.0>,)
 ```
 
 ```python
@@ -228,15 +211,6 @@ tf.saved_model.save(mymodule,"./data/mymodule",
 #加载模型
 mymodule2 = tf.saved_model.load("./data/mymodule")
 mymodule2.addprint(tf.constant(5.0))
-```
-
-```
-INFO:tensorflow:Assets written to: ./data/mymodule/assets
-5
-```
-
-```python
-
 ```
 
 ### 三，tf.Module和tf.keras.Model，tf.keras.layers.Layer
@@ -255,12 +229,6 @@ print(issubclass(tf.keras.layers.Layer,tf.Module))
 print(issubclass(tf.keras.Model,tf.keras.layers.Layer))
 ```
 
-```
-True
-True
-True
-```
-
 ```python
 tf.keras.backend.clear_session() 
 
@@ -272,51 +240,8 @@ model.add(layers.Dense(1))
 model.summary()
 ```
 
-```
-Model: "sequential"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-dense (Dense)                (None, 4)                 44        
-_________________________________________________________________
-dense_1 (Dense)              (None, 2)                 10        
-_________________________________________________________________
-dense_2 (Dense)              (None, 1)                 3         
-=================================================================
-Total params: 57
-Trainable params: 57
-Non-trainable params: 0
-_________________________________________________________________
-```
-
 ```python
 model.variables
-```
-
-```
-[<tf.Variable 'dense/kernel:0' shape=(10, 4) dtype=float32, numpy=
- array([[-0.06741005,  0.45534766,  0.5190817 , -0.01806331],
-        [-0.14258742, -0.49711505,  0.26030976,  0.18607801],
-        [-0.62806034,  0.5327399 ,  0.42206633,  0.29201728],
-        [-0.16602087, -0.18901917,  0.55159235, -0.01091868],
-        [ 0.04533798,  0.326845  , -0.582667  ,  0.19431782],
-        [ 0.6494713 , -0.16174704,  0.4062966 ,  0.48760796],
-        [ 0.58400524, -0.6280886 , -0.11265379, -0.6438277 ],
-        [ 0.26642334,  0.49275804,  0.20793378, -0.43889117],
-        [ 0.4092741 ,  0.09871006, -0.2073121 ,  0.26047975],
-        [ 0.43910992,  0.00199282, -0.07711256, -0.27966842]],
-       dtype=float32)>,
- <tf.Variable 'dense/bias:0' shape=(4,) dtype=float32, numpy=array([0., 0., 0., 0.], dtype=float32)>,
- <tf.Variable 'dense_1/kernel:0' shape=(4, 2) dtype=float32, numpy=
- array([[ 0.5022683 , -0.0507431 ],
-        [-0.61540484,  0.9369011 ],
-        [-0.14412141, -0.54607415],
-        [ 0.2027781 , -0.4651153 ]], dtype=float32)>,
- <tf.Variable 'dense_1/bias:0' shape=(2,) dtype=float32, numpy=array([0., 0.], dtype=float32)>,
- <tf.Variable 'dense_2/kernel:0' shape=(2, 1) dtype=float32, numpy=
- array([[-0.244825 ],
-        [-1.2101456]], dtype=float32)>,
- <tf.Variable 'dense_2/bias:0' shape=(1,) dtype=float32, numpy=array([0.], dtype=float32)>]
 ```
 
 ```python
@@ -324,52 +249,17 @@ model.layers[0].trainable = False #冻结第0层的变量,使其不可训练
 model.trainable_variables
 ```
 
-```
-[<tf.Variable 'dense_1/kernel:0' shape=(4, 2) dtype=float32, numpy=
- array([[ 0.5022683 , -0.0507431 ],
-        [-0.61540484,  0.9369011 ],
-        [-0.14412141, -0.54607415],
-        [ 0.2027781 , -0.4651153 ]], dtype=float32)>,
- <tf.Variable 'dense_1/bias:0' shape=(2,) dtype=float32, numpy=array([0., 0.], dtype=float32)>,
- <tf.Variable 'dense_2/kernel:0' shape=(2, 1) dtype=float32, numpy=
- array([[-0.244825 ],
-        [-1.2101456]], dtype=float32)>,
- <tf.Variable 'dense_2/bias:0' shape=(1,) dtype=float32, numpy=array([0.], dtype=float32)>]
-```
-
 ```python
 model.submodules
-```
-
-```
-(<tensorflow.python.keras.engine.input_layer.InputLayer at 0x144d8c080>,
- <tensorflow.python.keras.layers.core.Dense at 0x144daada0>,
- <tensorflow.python.keras.layers.core.Dense at 0x144d8c5c0>,
- <tensorflow.python.keras.layers.core.Dense at 0x144d7aa20>)
 ```
 
 ```python
 model.layers
 ```
 
-```
-[<tensorflow.python.keras.layers.core.Dense at 0x144daada0>,
- <tensorflow.python.keras.layers.core.Dense at 0x144d8c5c0>,
- <tensorflow.python.keras.layers.core.Dense at 0x144d7aa20>]
-```
-
 ```python
 print(model.name)
 print(model.name_scope())
-```
-
-```
-sequential
-sequential
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

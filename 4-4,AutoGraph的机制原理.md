@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 4-4,AutoGraph的机制原理
 
 有三种计算图的构建方式：静态计算图，动态计算图，以及Autograph。
@@ -48,13 +72,6 @@ def myadd(a,b):
 
 ```python
 myadd(tf.constant("hello"),tf.constant("world"))
-```
-
-```
-tracing
-0
-1
-2
 ```
 
 <!-- #region -->
@@ -108,13 +125,6 @@ with tf.Session(graph=g) as sess:
 myadd(tf.constant("good"),tf.constant("morning"))
 ```
 
-```
-0
-1
-2
-```
-
-
 只会发生一件事情，那就是上面步骤的第二步，执行计算图。
 
 所以这一次我们没有看到打印"tracing"的结果。
@@ -127,14 +137,6 @@ myadd(tf.constant("good"),tf.constant("morning"))
 ```python
 myadd(tf.constant(1),tf.constant(2))
 ```
-
-```
-tracing
-0
-1
-2
-```
-
 
 由于输入参数的类型已经发生变化，已经创建的计算图不能够再次使用。
 
@@ -152,25 +154,6 @@ tracing
 ```python
 myadd("hello","world")
 myadd("good","morning")
-```
-
-```
-tracing
-0
-1
-2
-tracing
-0
-1
-2
-```
-
-```python
-
-```
-
-```python
-
 ```
 
 ### 二，重新理解Autograph的编码规范
@@ -193,9 +176,6 @@ tracing
 解释：静态计算图是被编译成C++代码在TensorFlow内核中执行的。Python中的列表和字典等数据结构变量是无法嵌入到计算图中，它们仅仅能够在创建计算图时被读取，在执行计算图时是无法修改Python中的列表或字典这样的数据结构变量的。
 
 
-```python
-
-```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。
 
