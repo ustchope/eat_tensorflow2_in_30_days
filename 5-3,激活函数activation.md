@@ -1,3 +1,11 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
 # 5-3,激活函数activation
 
 激活函数在深度学习中扮演着非常重要的角色，它给网络赋予了非线性，从而使得神经网络能够拟合任意复杂的函数。
@@ -57,9 +65,6 @@ https://zhuanlan.zhihu.com/p/98863801
 
 ![](./data/gelu.png)
 
-```python
-
-```
 
 ### 二，在模型中使用激活函数
 
@@ -79,11 +84,6 @@ model.add(layers.Dense(32,input_shape = (None,16),activation = tf.nn.relu)) #通
 model.add(layers.Dense(10))
 model.add(layers.Activation(tf.nn.softmax))  # 显式添加layers.Activation激活层
 model.summary()
-
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

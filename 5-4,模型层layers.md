@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 5-4,模型层layers
 
 深度学习模型一般由各种模型层组合而成。
@@ -14,9 +38,6 @@ layers.Embedding,layers.GRU,layers.LSTM,layers.Bidirectional等等。
 
 其中tf.keras.Lambda匿名模型层只适用于构造没有学习参数的模型层。
 
-```python
-
-```
 
 ### 一，内置模型层
 
@@ -109,9 +130,6 @@ layers.Embedding,layers.GRU,layers.LSTM,layers.Bidirectional等等。
 
 * TimeDistributed：时间分布包装器。包装后可以将Dense、Conv2D等作用到每一个时间片段上。
 
-```python
-
-```
 
 ### 二，自定义模型层
 
@@ -132,12 +150,7 @@ mypower = layers.Lambda(lambda x:tf.math.pow(x,2))
 mypower(tf.range(5))
 ```
 
-```
-<tf.Tensor: shape=(5,), dtype=int32, numpy=array([ 0,  1,  4,  9, 16], dtype=int32)>
-```
-
-
-Layer的子类化一般需要重新实现初始化方法，Build方法和Call方法。下面是一个简化的线性层的范例，类似Dense.
+Layer的子类化一般需要重新实现初始化方法，`Build`方法和`Call`方法。下面是一个简化的线性层的范例，类似Dense.
 
 ```python
 class Linear(layers.Layer):
@@ -165,7 +178,6 @@ class Linear(layers.Layer):
         config = super(Linear, self).get_config()
         config.update({'units': self.units})
         return config
-
 ```
 
 ```python
@@ -176,21 +188,11 @@ linear.build(input_shape = (None,16))
 print(linear.built)
 ```
 
-```
-False
-True
-```
-
 ```python
 linear = Linear(units = 8)
 print(linear.built)
 linear.build(input_shape = (None,16)) 
 print(linear.compute_output_shape(input_shape = (None,16)))
-```
-
-```
-False
-(None, 8)
 ```
 
 ```python
@@ -203,12 +205,6 @@ config = linear.get_config()
 print(config)
 ```
 
-```
-False
-True
-{'name': 'linear_3', 'trainable': True, 'dtype': 'float32', 'units': 16}
-```
-
 ```python
 tf.keras.backend.clear_session()
 
@@ -218,21 +214,6 @@ model.add(Linear(units = 1,input_shape = (2,)))
 print("model.input_shape: ",model.input_shape)
 print("model.output_shape: ",model.output_shape)
 model.summary()
-```
-
-```
-model.input_shape:  (None, 2)
-model.output_shape:  (None, 1)
-Model: "sequential"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-linear (Linear)              (None, 1)                 3         
-=================================================================
-Total params: 3
-Trainable params: 3
-Non-trainable params: 0
-_________________________________________________________________
 ```
 
 ```python
@@ -251,19 +232,7 @@ print(model_loaded_keras.predict(tf.constant([[3.0,2.0],[4.0,5.0]])))
 model.save("./data/linear_model",save_format = "tf")
 model_loaded_tf = tf.keras.models.load_model("./data/linear_model")
 print(model_loaded_tf.predict(tf.constant([[3.0,2.0],[4.0,5.0]])))
-
 ```
-
-```
-[[-0.04092304]
- [-0.06150477]]
-[[-0.04092304]
- [-0.06150477]]
-INFO:tensorflow:Assets written to: ./data/linear_model/assets
-[[-0.04092304]
- [-0.06150477]]
-```
-
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。
 

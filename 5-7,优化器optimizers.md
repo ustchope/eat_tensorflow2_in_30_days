@@ -21,9 +21,6 @@ https://zhuanlan.zhihu.com/p/32230623
 此外目前也有一些前沿的优化算法，据称效果比Adam更好，例如LazyAdam, Look-ahead, RAdam, Ranger等.
 
 
-```python
-
-```
 
 ### 一，优化器的使用
 
@@ -99,10 +96,6 @@ tf.print("x =",x)
 ```
 
 ```python
-
-```
-
-```python
 # 求f(x) = a*x**2 + b*x + c的最小值
 
 # 使用optimizer.minimize
@@ -127,11 +120,6 @@ def train(epoch = 1000):
 train(1000)
 tf.print("y = ",f())
 tf.print("x = ",x)
-
-```
-
-```python
-
 ```
 
 ```python
@@ -167,16 +155,11 @@ model.compile(optimizer =
               tf.keras.optimizers.SGD(learning_rate=0.01),loss = myloss)
 history = model.fit(tf.zeros((100,2)),
                     tf.ones(100),batch_size = 1,epochs = 10)  #迭代1000次
-
 ```
 
 ```python
 tf.print("x=",model.x)
 tf.print("loss=",model(tf.constant(0.0)))
-```
-
-```python
-
 ```
 
 ### 二，内置优化器
@@ -198,9 +181,6 @@ tf.print("loss=",model(tf.constant(0.0)))
 
 * Nadam, 在Adam基础上进一步考虑了 Nesterov Acceleration。
 
-```python
-
-```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。
 

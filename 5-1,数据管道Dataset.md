@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 5-1,数据管道Dataset
 
 如果需要训练的数据大小不大，例如不到1G，那么可以直接全部读入内存中进行训练，这样一般效率最高。
@@ -6,9 +30,6 @@
 
 使用 tf.data API 可以构建数据输入管道，轻松处理大量的数据，不同的数据格式，以及不同的数据转换。
 
-```python
-
-```
 
 ### 一，构建数据管道
 
@@ -22,7 +43,7 @@
 但tfrecords文件的优点是压缩后文件较小，便于网络传播，加载速度较快。
 
 
-**1,从Numpy array构建数据管道**
+####   **1, 从Numpy array构建数据管道**
 
 ```python
 # 从Numpy array构建数据管道
@@ -36,22 +57,9 @@ iris = datasets.load_iris()
 ds1 = tf.data.Dataset.from_tensor_slices((iris["data"],iris["target"]))
 for features,label in ds1.take(5):
     print(features,label)
-
 ```
 
-```
-tf.Tensor([5.1 3.5 1.4 0.2], shape=(4,), dtype=float64) tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor([4.9 3.  1.4 0.2], shape=(4,), dtype=float64) tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor([4.7 3.2 1.3 0.2], shape=(4,), dtype=float64) tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor([4.6 3.1 1.5 0.2], shape=(4,), dtype=float64) tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor([5.  3.6 1.4 0.2], shape=(4,), dtype=float64) tf.Tensor(0, shape=(), dtype=int64)
-```
-
-```python
-
-```
-
-**2,从 Pandas DataFrame构建数据管道**
+#### **2, 从 Pandas DataFrame构建数据管道**
 
 ```python
 # 从 Pandas DataFrame构建数据管道
@@ -66,21 +74,30 @@ for features,label in ds2.take(3):
     print(features,label)
 ```
 
-```
-{'sepal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=5.1>, 'sepal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=3.5>, 'petal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=1.4>, 'petal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=0.2>} tf.Tensor(0, shape=(), dtype=int64)
-{'sepal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=4.9>, 'sepal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=3.0>, 'petal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=1.4>, 'petal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=0.2>} tf.Tensor(0, shape=(), dtype=int64)
-{'sepal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=4.7>, 'sepal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=3.2>, 'petal length (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=1.3>, 'petal width (cm)': <tf.Tensor: shape=(), dtype=float32, numpy=0.2>} tf.Tensor(0, shape=(), dtype=int64)
-```
+#### **3, 从Python generator构建数据管道**
 
 ```python
+# 从Python generator构建数据管道
+import tensorflow as tf
+from matplotlib import pyplot as plt 
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+# 定义一个从文件中读取图片的generator
+image_generator = ImageDataGenerator(rescale=1.0/255).flow_from_directory(
+                    "./data/cifar2/test/",
+                    target_size=(32, 32),
+                    batch_size=20,
+                    class_mode='binary')
+
+classdict = image_generator.class_indices
+print(classdict)
+
+def generator():
+    for features,label in image_generator:
+        yield (features,label)
+
+ds3 = tf.data.Dataset.from_generator(generator,output_types=(tf.float32,tf.int32))
 ```
-
-```python
-
-```
-
-**3,从Python generator构建数据管道**
 
 ```python
 # 从Python generator构建数据管道
@@ -118,13 +135,7 @@ for i,(img,label) in enumerate(ds3.unbatch().take(9)):
 plt.show()
 ```
 
-![](./data/5-1-cifar2预览.jpg)
-
-```python
-
-```
-
-**4,从csv文件构建数据管道**
+#### **4, 从csv文件构建数据管道**
 
 ```python
 # 从csv文件构建数据管道
@@ -140,20 +151,7 @@ for data,label in ds4.take(2):
     print(data,label)
 ```
 
-```
-OrderedDict([('PassengerId', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([540,  58, 764], dtype=int32)>), ('Pclass', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([1, 3, 1], dtype=int32)>), ('Name', <tf.Tensor: shape=(3,), dtype=string, numpy=
-array([b'Frolicher, Miss. Hedwig Margaritha', b'Novel, Mr. Mansouer',
-       b'Carter, Mrs. William Ernest (Lucile Polk)'], dtype=object)>), ('Sex', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'female', b'male', b'female'], dtype=object)>), ('Age', <tf.Tensor: shape=(3,), dtype=float32, numpy=array([22. , 28.5, 36. ], dtype=float32)>), ('SibSp', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([0, 0, 1], dtype=int32)>), ('Parch', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([2, 0, 2], dtype=int32)>), ('Ticket', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'13568', b'2697', b'113760'], dtype=object)>), ('Fare', <tf.Tensor: shape=(3,), dtype=float32, numpy=array([ 49.5   ,   7.2292, 120.    ], dtype=float32)>), ('Cabin', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'B39', b'', b'B96 B98'], dtype=object)>), ('Embarked', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'C', b'C', b'S'], dtype=object)>)]) tf.Tensor([1 0 1], shape=(3,), dtype=int32)
-OrderedDict([('PassengerId', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([845,  66, 390], dtype=int32)>), ('Pclass', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([3, 3, 2], dtype=int32)>), ('Name', <tf.Tensor: shape=(3,), dtype=string, numpy=
-array([b'Culumovic, Mr. Jeso', b'Moubarek, Master. Gerios',
-       b'Lehmann, Miss. Bertha'], dtype=object)>), ('Sex', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'male', b'male', b'female'], dtype=object)>), ('Age', <tf.Tensor: shape=(3,), dtype=float32, numpy=array([17.,  0., 17.], dtype=float32)>), ('SibSp', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([0, 1, 0], dtype=int32)>), ('Parch', <tf.Tensor: shape=(3,), dtype=int32, numpy=array([0, 1, 0], dtype=int32)>), ('Ticket', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'315090', b'2661', b'SC 1748'], dtype=object)>), ('Fare', <tf.Tensor: shape=(3,), dtype=float32, numpy=array([ 8.6625, 15.2458, 12.    ], dtype=float32)>), ('Cabin', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'', b'', b''], dtype=object)>), ('Embarked', <tf.Tensor: shape=(3,), dtype=string, numpy=array([b'S', b'C', b'C'], dtype=object)>)]) tf.Tensor([0 1 1], shape=(3,), dtype=int32)
-```
-
-```python
-
-```
-
-**5,从文本文件构建数据管道**
+#### **5, 从文本文件构建数据管道**
 
 ```python
 # 从文本文件构建数据管道
@@ -166,32 +164,12 @@ for line in ds5.take(5):
     print(line)
 ```
 
-```
-tf.Tensor(b'493,0,1,"Molson, Mr. Harry Markland",male,55.0,0,0,113787,30.5,C30,S', shape=(), dtype=string)
-tf.Tensor(b'53,1,1,"Harper, Mrs. Henry Sleeper (Myna Haxtun)",female,49.0,1,0,PC 17572,76.7292,D33,C', shape=(), dtype=string)
-tf.Tensor(b'388,1,2,"Buss, Miss. Kate",female,36.0,0,0,27849,13.0,,S', shape=(), dtype=string)
-tf.Tensor(b'192,0,2,"Carbines, Mr. William",male,19.0,0,0,28424,13.0,,S', shape=(), dtype=string)
-tf.Tensor(b'687,0,3,"Panula, Mr. Jaako Arnold",male,14.0,4,1,3101295,39.6875,,S', shape=(), dtype=string)
-```
-
-```python
-
-```
-
-**6,从文件路径构建数据管道**
+#### **6, 从文件路径构建数据管道**
 
 ```python
 ds6 = tf.data.Dataset.list_files("./data/cifar2/train/*/*.jpg")
 for file in ds6.take(5):
     print(file)
-```
-
-```
-tf.Tensor(b'./data/cifar2/train/automobile/1263.jpg', shape=(), dtype=string)
-tf.Tensor(b'./data/cifar2/train/airplane/2837.jpg', shape=(), dtype=string)
-tf.Tensor(b'./data/cifar2/train/airplane/4264.jpg', shape=(), dtype=string)
-tf.Tensor(b'./data/cifar2/train/automobile/4241.jpg', shape=(), dtype=string)
-tf.Tensor(b'./data/cifar2/train/automobile/192.jpg', shape=(), dtype=string)
 ```
 
 ```python
@@ -213,13 +191,7 @@ for i,(img,label) in enumerate(ds6.map(load_image).take(2)):
     plt.yticks([])
 ```
 
-![](./data/5-1-car2.jpg)
-
-```python
-
-```
-
-**7,从tfrecords文件构建数据管道**
+#### **7, 从tfrecords文件构建数据管道**
 
 ```python
 import os
@@ -245,7 +217,6 @@ def create_tfrecords(inpath,outpath):
     writer.close()
     
 create_tfrecords("./data/cifar2/test/","./data/cifar2_test.tfrecords/")
-
 ```
 
 ```python
@@ -272,17 +243,6 @@ for i,(img,label) in enumerate(ds7.take(9)):
     ax.set_xticks([])
     ax.set_yticks([]) 
 plt.show()
-
-```
-
-![](./data/5-1-car9.jpg)
-
-```python
-
-```
-
-```python
-
 ```
 
 ### 二，应用数据转换
@@ -321,107 +281,67 @@ Dataset包含了非常丰富的数据转换功能。
 * take: 采样，从开始位置取前几个元素。
 
 
-```python
-#map:将转换函数映射到数据集每一个元素
 
+#### map:将转换函数映射到数据集每一个元素
+
+```python
 ds = tf.data.Dataset.from_tensor_slices(["hello world","hello China","hello Beijing"])
 ds_map = ds.map(lambda x:tf.strings.split(x," "))
 for x in ds_map:
     print(x)
 ```
 
-```
-tf.Tensor([b'hello' b'world'], shape=(2,), dtype=string)
-tf.Tensor([b'hello' b'China'], shape=(2,), dtype=string)
-tf.Tensor([b'hello' b'Beijing'], shape=(2,), dtype=string)
-```
+#### flat_map:将转换函数映射到数据集的每一个元素，并将嵌套的Dataset压平。
 
 ```python
-#flat_map:将转换函数映射到数据集的每一个元素，并将嵌套的Dataset压平。
-
 ds = tf.data.Dataset.from_tensor_slices(["hello world","hello China","hello Beijing"])
 ds_flatmap = ds.flat_map(lambda x:tf.data.Dataset.from_tensor_slices(tf.strings.split(x," ")))
 for x in ds_flatmap:
     print(x)
 ```
 
-```
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'world', shape=(), dtype=string)
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'China', shape=(), dtype=string)
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'Beijing', shape=(), dtype=string)
-```
+#### interleave: 效果类似flat_map,但可以将不同来源的数据夹在一起。
 
 ```python
-
-```
-
-```python
-# interleave: 效果类似flat_map,但可以将不同来源的数据夹在一起。
-
 ds = tf.data.Dataset.from_tensor_slices(["hello world","hello China","hello Beijing"])
 ds_interleave = ds.interleave(lambda x:tf.data.Dataset.from_tensor_slices(tf.strings.split(x," ")))
 for x in ds_interleave:
     print(x)
-    
 ```
 
-```
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'hello', shape=(), dtype=string)
-tf.Tensor(b'world', shape=(), dtype=string)
-tf.Tensor(b'China', shape=(), dtype=string)
-tf.Tensor(b'Beijing', shape=(), dtype=string)
-```
+#### filter:过滤掉某些元素。
 
 ```python
-
-```
-
-```python
-#filter:过滤掉某些元素。
-
 ds = tf.data.Dataset.from_tensor_slices(["hello world","hello China","hello Beijing"])
 #找出含有字母a或B的元素
 ds_filter = ds.filter(lambda x: tf.strings.regex_full_match(x, ".*[a|B].*"))
 for x in ds_filter:
     print(x)
-    
 ```
 
-```
-tf.Tensor(b'hello China', shape=(), dtype=string)
-tf.Tensor(b'hello Beijing', shape=(), dtype=string)
-```
+#### zip:将两个长度相同的Dataset横向铰合。
 
 ```python
-
-```
-
-```python
-#zip:将两个长度相同的Dataset横向铰合。
-
 ds1 = tf.data.Dataset.range(0,3)
 ds2 = tf.data.Dataset.range(3,6)
 ds3 = tf.data.Dataset.range(6,9)
 ds_zip = tf.data.Dataset.zip((ds1,ds2,ds3))
 for x,y,z in ds_zip:
     print(x.numpy(),y.numpy(),z.numpy())
-
-```
-
-```
-0 3 6
-1 4 7
-2 5 8
 ```
 
 ```python
-#condatenate:将两个Dataset纵向连接。
+ds1 = tf.data.Dataset.from_tensor_slices(np.arange(0,3))
+ds2 = tf.data.Dataset.range(3,6)
+ds3 = tf.data.Dataset.range(6,9)
+ds_zip = tf.data.Dataset.zip((ds1,ds2,ds3))
+for x,y,z in ds_zip:
+    print(x.numpy(),y.numpy(),z.numpy())
+```
 
+#### condatenate:将两个Dataset纵向连接。
+
+```python
 ds1 = tf.data.Dataset.range(0,3)
 ds2 = tf.data.Dataset.range(3,6)
 ds_concat = tf.data.Dataset.concatenate(ds1,ds2)
@@ -429,53 +349,26 @@ for x in ds_concat:
     print(x)
 ```
 
-```
-tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(2, shape=(), dtype=int64)
-tf.Tensor(3, shape=(), dtype=int64)
-tf.Tensor(4, shape=(), dtype=int64)
-tf.Tensor(5, shape=(), dtype=int64)
-```
+#### reduce:执行归并操作。
 
 ```python
-#reduce:执行归并操作。
-
 ds = tf.data.Dataset.from_tensor_slices([1,2,3,4,5.0])
 result = ds.reduce(0.0,lambda x,y:tf.add(x,y))
 result
 ```
 
-```
-<tf.Tensor: shape=(), dtype=float32, numpy=15.0>
-```
+#### batch:构建批次，每次放一个批次。比原始数据增加一个维度。 其逆操作为unbatch。 
 
 ```python
-
-```
-
-```python
-#batch:构建批次，每次放一个批次。比原始数据增加一个维度。 其逆操作为unbatch。 
-
 ds = tf.data.Dataset.range(12)
 ds_batch = ds.batch(4)
 for x in ds_batch:
     print(x)
 ```
 
-```
-tf.Tensor([0 1 2 3], shape=(4,), dtype=int64)
-tf.Tensor([4 5 6 7], shape=(4,), dtype=int64)
-tf.Tensor([ 8  9 10 11], shape=(4,), dtype=int64)
-```
+#### padded_batch:构建批次，类似batch, 但可以填充到相同的形状。
 
 ```python
-
-```
-
-```python
-#padded_batch:构建批次，类似batch, 但可以填充到相同的形状。
-
 elements = [[1, 2],[3, 4, 5],[6, 7],[8]]
 ds = tf.data.Dataset.from_generator(lambda: iter(elements), tf.int32)
 
@@ -484,22 +377,9 @@ for x in ds_padded_batch:
     print(x)    
 ```
 
-```
-tf.Tensor(
-[[1 2 0 0]
- [3 4 5 0]], shape=(2, 4), dtype=int32)
-tf.Tensor(
-[[6 7 0 0]
- [8 0 0 0]], shape=(2, 4), dtype=int32)
-```
+#### window:构建滑动窗口，返回Dataset of Dataset
 
 ```python
-
-```
-
-```python
-#window:构建滑动窗口，返回Dataset of Dataset.
-
 ds = tf.data.Dataset.range(12)
 #window返回的是Dataset of Dataset,可以用flat_map压平
 ds_window = ds.window(3, shift=1).flat_map(lambda x: x.batch(3,drop_remainder=True)) 
@@ -507,76 +387,27 @@ for x in ds_window:
     print(x)
 ```
 
-```
-tf.Tensor([0 1 2], shape=(3,), dtype=int64)
-tf.Tensor([1 2 3], shape=(3,), dtype=int64)
-tf.Tensor([2 3 4], shape=(3,), dtype=int64)
-tf.Tensor([3 4 5], shape=(3,), dtype=int64)
-tf.Tensor([4 5 6], shape=(3,), dtype=int64)
-tf.Tensor([5 6 7], shape=(3,), dtype=int64)
-tf.Tensor([6 7 8], shape=(3,), dtype=int64)
-tf.Tensor([7 8 9], shape=(3,), dtype=int64)
-tf.Tensor([ 8  9 10], shape=(3,), dtype=int64)
-tf.Tensor([ 9 10 11], shape=(3,), dtype=int64)
-```
+#### shuffle:数据顺序洗牌。
 
 ```python
-
-```
-
-```python
-#shuffle:数据顺序洗牌。
-
 ds = tf.data.Dataset.range(12)
 ds_shuffle = ds.shuffle(buffer_size = 5)
 for x in ds_shuffle:
     print(x)
-    
 ```
 
-```
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(4, shape=(), dtype=int64)
-tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor(6, shape=(), dtype=int64)
-tf.Tensor(5, shape=(), dtype=int64)
-tf.Tensor(2, shape=(), dtype=int64)
-tf.Tensor(7, shape=(), dtype=int64)
-tf.Tensor(11, shape=(), dtype=int64)
-tf.Tensor(3, shape=(), dtype=int64)
-tf.Tensor(9, shape=(), dtype=int64)
-tf.Tensor(10, shape=(), dtype=int64)
-tf.Tensor(8, shape=(), dtype=int64)
-```
+#### repeat:重复数据若干次，不带参数时，重复无数次。
 
 ```python
-
-```
-
-```python
-#repeat:重复数据若干次，不带参数时，重复无数次。
-
 ds = tf.data.Dataset.range(3)
 ds_repeat = ds.repeat(3)
 for x in ds_repeat:
     print(x)
 ```
 
-```
-tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(2, shape=(), dtype=int64)
-tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(2, shape=(), dtype=int64)
-tf.Tensor(0, shape=(), dtype=int64)
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(2, shape=(), dtype=int64)
-```
+#### shard:采样，从某个位置开始隔固定距离采样一个元素。
 
 ```python
-#shard:采样，从某个位置开始隔固定距离采样一个元素。
-
 ds = tf.data.Dataset.range(12)
 ds_shard = ds.shard(3,index = 1)
 
@@ -584,34 +415,19 @@ for x in ds_shard:
     print(x)
 ```
 
-```
-tf.Tensor(1, shape=(), dtype=int64)
-tf.Tensor(4, shape=(), dtype=int64)
-tf.Tensor(7, shape=(), dtype=int64)
-tf.Tensor(10, shape=(), dtype=int64)
-```
+#### take:采样，从开始位置取前几个元素。
 
 ```python
-#take:采样，从开始位置取前几个元素。
-
 ds = tf.data.Dataset.range(12)
 ds_take = ds.take(3)
 
 list(ds_take.as_numpy_iterator())
-
 ```
 
 ```
 [0, 1, 2]
 ```
 
-```python
-
-```
-
-```python
-
-```
 
 ### 三，提升管道性能
 
@@ -636,11 +452,8 @@ list(ds_take.as_numpy_iterator())
 
 * 5，使用 map转换时，先batch, 然后采用向量化的转换方法对每个batch进行转换。
 
-```python
 
-```
-
-**1，使用 prefetch 方法让数据准备和参数迭代两个过程相互并行。**
+#### **1，使用 prefetch 方法让数据准备和参数迭代两个过程相互并行。**
 
 ```python
 import tensorflow as tf
@@ -665,7 +478,6 @@ def printbar():
                 timeformat(second)],separator = ":")
     tf.print("=========="*8,end = "")
     tf.print(timestring)
-    
 ```
 
 ```python
@@ -685,7 +497,6 @@ ds = tf.data.Dataset.from_generator(generator,output_types = (tf.int32))
 def train_step():
     #假设每一步训练需要1s
     time.sleep(1) 
-    
 ```
 
 ```python
@@ -711,27 +522,15 @@ for x in ds.prefetch(buffer_size = tf.data.experimental.AUTOTUNE):
     
 printbar()
 tf.print(tf.constant("end training..."))
-
 ```
 
-```python
-
-```
-
-**2，使用 interleave 方法可以让数据读取过程多进程执行,并将不同来源数据夹在一起。**
+#### **2，使用 interleave 方法可以让数据读取过程多进程执行,并将不同来源数据夹在一起。**
 
 ```python
 ds_files = tf.data.Dataset.list_files("./data/titanic/*.csv")
 ds = ds_files.flat_map(lambda x:tf.data.TextLineDataset(x).skip(1))
 for line in ds.take(4):
     print(line)
-```
-
-```
-tf.Tensor(b'493,0,1,"Molson, Mr. Harry Markland",male,55.0,0,0,113787,30.5,C30,S', shape=(), dtype=string)
-tf.Tensor(b'53,1,1,"Harper, Mrs. Henry Sleeper (Myna Haxtun)",female,49.0,1,0,PC 17572,76.7292,D33,C', shape=(), dtype=string)
-tf.Tensor(b'388,1,2,"Buss, Miss. Kate",female,36.0,0,0,27849,13.0,,S', shape=(), dtype=string)
-tf.Tensor(b'192,0,2,"Carbines, Mr. William",male,19.0,0,0,28424,13.0,,S', shape=(), dtype=string)
 ```
 
 ```python
@@ -741,22 +540,7 @@ for line in ds.take(8):
     print(line)
 ```
 
-```
-tf.Tensor(b'181,0,3,"Sage, Miss. Constance Gladys",female,,8,2,CA. 2343,69.55,,S', shape=(), dtype=string)
-tf.Tensor(b'493,0,1,"Molson, Mr. Harry Markland",male,55.0,0,0,113787,30.5,C30,S', shape=(), dtype=string)
-tf.Tensor(b'405,0,3,"Oreskovic, Miss. Marija",female,20.0,0,0,315096,8.6625,,S', shape=(), dtype=string)
-tf.Tensor(b'53,1,1,"Harper, Mrs. Henry Sleeper (Myna Haxtun)",female,49.0,1,0,PC 17572,76.7292,D33,C', shape=(), dtype=string)
-tf.Tensor(b'635,0,3,"Skoog, Miss. Mabel",female,9.0,3,2,347088,27.9,,S', shape=(), dtype=string)
-tf.Tensor(b'388,1,2,"Buss, Miss. Kate",female,36.0,0,0,27849,13.0,,S', shape=(), dtype=string)
-tf.Tensor(b'701,1,1,"Astor, Mrs. John Jacob (Madeleine Talmadge Force)",female,18.0,1,0,PC 17757,227.525,C62 C64,C', shape=(), dtype=string)
-tf.Tensor(b'192,0,2,"Carbines, Mr. William",male,19.0,0,0,28424,13.0,,S', shape=(), dtype=string)
-```
-
-```python
-
-```
-
-**3，使用 map 时设置num_parallel_calls 让数据转换过程多进行执行。**
+#### **3，使用 map 时设置num_parallel_calls 让数据转换过程多进行执行。**
 
 ```python
 ds = tf.data.Dataset.list_files("./data/cifar2/train/*/*.jpg")
@@ -794,11 +578,7 @@ printbar()
 tf.print(tf.constant("end parallel transformation..."))
 ```
 
-```python
-
-```
-
-**4，使用 cache 方法让数据在第一个epoch后缓存到内存中，仅限于数据集不大情形。**
+#### **4，使用 cache 方法让数据在第一个epoch后缓存到内存中，仅限于数据集不大情形。**
 
 ```python
 import time
@@ -826,7 +606,6 @@ for epoch in tf.range(3):
     tf.print("epoch =",epoch," ended")
 printbar()
 tf.print(tf.constant("end training..."))
-
 ```
 
 ```python
@@ -859,11 +638,7 @@ printbar()
 tf.print(tf.constant("end training..."))
 ```
 
-```python
-
-```
-
-**5，使用 map转换时，先batch, 然后采用向量化的转换方法对每个batch进行转换。**
+#### **5，使用 map转换时，先batch, 然后采用向量化的转换方法对每个batch进行转换。**
 
 ```python
 #先map后batch
@@ -876,7 +651,6 @@ for x in ds_map_batch:
     pass
 printbar()
 tf.print(tf.constant("end scalar transformation..."))
-
 ```
 
 ```python
@@ -890,11 +664,6 @@ for x in ds_batch_map:
     pass
 printbar()
 tf.print(tf.constant("end vector transformation..."))
-
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

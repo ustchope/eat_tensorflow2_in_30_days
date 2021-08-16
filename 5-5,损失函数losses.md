@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 5-5,损失函数losses
 
 一般来说，监督学习的目标函数由损失函数和正则化项组成。（Objective = Loss + Regularization）
@@ -35,24 +59,7 @@ model.add(layers.Dense(10,
 model.compile(optimizer = "rmsprop",
         loss = "binary_crossentropy",metrics = ["AUC"])
 model.summary()
-
 ```
-
-```
-Model: "sequential"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-dense (Dense)                (None, 64)                4160      
-_________________________________________________________________
-dense_1 (Dense)              (None, 10)                650       
-=================================================================
-Total params: 4,810
-Trainable params: 4,810
-Non-trainable params: 0
-_________________________________________________________________
-```
-
 
 ### 二，内置损失函数
 
@@ -83,9 +90,6 @@ _________________________________________________________________
 
 * cosine_similarity(余弦相似度，可用于多分类，类实现形式为 CosineSimilarity)
 
-```python
-
-```
 
 ### 三，自定义损失函数
 
@@ -125,7 +129,6 @@ def focal_loss(gamma=2., alpha=0.75):
         loss = tf.reduce_sum(alpha_factor * modulating_factor * bce,axis = -1 )
         return loss
     return focal_loss_fixed
-
 ```
 
 ```python
@@ -142,11 +145,6 @@ class FocalLoss(tf.keras.losses.Loss):
         modulating_factor = tf.pow(1.0 - p_t, self.gamma)
         loss = tf.reduce_sum(alpha_factor * modulating_factor * bce,axis = -1 )
         return loss
-
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。

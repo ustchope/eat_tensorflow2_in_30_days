@@ -1,3 +1,27 @@
+```python
+# 自动计算cell的计算时间
+%load_ext autotime
+
+%matplotlib inline
+%config InlineBackend.figure_format='svg' #矢量图设置，让绘图更清晰
+```
+
+```python
+#设置使用的gpu
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+
+if gpus:
+   
+    gpu0 = gpus[0] #如果有多个GPU，仅使用第0个GPU
+    tf.config.experimental.set_memory_growth(gpu0, True) #设置GPU显存用量按需使用
+    # 或者也可以设置GPU显存为固定使用量(例如：4G)
+    #tf.config.experimental.set_virtual_device_configuration(gpu0,
+    #    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]) 
+    tf.config.set_visible_devices([gpu0],"GPU")
+```
+
 # 5-2,特征列feature_column
 
 特征列 通常用于对结构化数据实施特征工程时候使用，图像或者文本数据一般不会用到特征列。
@@ -63,10 +87,7 @@ from tensorflow.keras import layers,models
 def printlog(info):
     nowtime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print("\n"+"=========="*8 + "%s"%nowtime)
-    print(info+'...\n\n')
-
-
-    
+    print(info+'...\n\n') 
 ```
 
 ```python
@@ -174,7 +195,6 @@ crossed_feature = tf.feature_column.indicator_column(
     tf.feature_column.crossed_column([age_buckets, pclass_cate],hash_bucket_size=15))
 
 feature_columns.append(crossed_feature)
-
 ```
 
 ```python
@@ -190,7 +210,6 @@ model = tf.keras.Sequential([
   layers.Dense(64, activation='relu'),
   layers.Dense(1, activation='sigmoid')
 ])
-
 ```
 
 ```python
@@ -236,28 +255,6 @@ def plot_metric(history, metric):
 
 plot_metric(history,"accuracy")
 ```
-
-```
-Model: "sequential"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-dense_features (DenseFeature multiple                  64        
-_________________________________________________________________
-dense (Dense)                multiple                  3008      
-_________________________________________________________________
-dense_1 (Dense)              multiple                  4160      
-_________________________________________________________________
-dense_2 (Dense)              multiple                  65        
-=================================================================
-Total params: 7,297
-Trainable params: 7,297
-Non-trainable params: 0
-_________________________________________________________________
-```
-
-
-![](./data/5-2-01-模型评估.jpg)
 
 ```python
 

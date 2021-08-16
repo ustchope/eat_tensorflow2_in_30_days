@@ -61,13 +61,6 @@
 
 * Sum (求和)
 
-```python
-
-```
-
-```python
-
-```
 
 ### 二， 自定义评估指标
 
@@ -114,10 +107,6 @@ y_pred = tf.constant([[0.6],[0.1],[0.4],[0.5],[0.7],[0.7],[0.7],
 tf.print(ks(y_true,y_pred))
 ```
 
-```
-0.625
-```
-
 ```python
 #类形式的自定义评估指标
 class KS(metrics.Metric):
@@ -151,7 +140,6 @@ class KS(metrics.Metric):
             tf.cumsum(self.false_positives),tf.reduce_sum(self.false_positives))
         ks_value = tf.reduce_max(tf.abs(cum_positive_ratio - cum_negative_ratio)) 
         return ks_value
-
 ```
 
 ```python
@@ -162,14 +150,6 @@ y_pred = tf.constant([[0.6],[0.1],[0.4],[0.5],[0.7],[0.7],
 myks = KS()
 myks.update_state(y_true,y_pred)
 tf.print(myks.result())
-
-```
-
-```
-0.625
-```
-
-```python
 
 ```
 

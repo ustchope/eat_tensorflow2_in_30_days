@@ -41,9 +41,6 @@ model即当前关联的模型的引用。
 
 
 
-```python
-
-```
 
 ### 二，自定义回调函数
 
@@ -58,7 +55,6 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers,models,losses,metrics,callbacks
 import tensorflow.keras.backend as K 
-
 ```
 
 ```python
@@ -71,7 +67,6 @@ json_logging_callback = callbacks.LambdaCallback(
         json.dumps(dict(epoch = epoch,**logs)) + '\n'),
     on_train_end=lambda logs: json_log.close()
 )
-
 ```
 
 ```python
@@ -105,11 +100,6 @@ class LearningRateScheduler(callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
         logs['lr'] = K.get_value(self.model.optimizer.lr)
-
-```
-
-```python
-
 ```
 
 如果对本书内容理解上有需要进一步和作者交流的地方，欢迎在公众号"算法美食屋"下留言。作者时间和精力有限，会酌情予以回复。
